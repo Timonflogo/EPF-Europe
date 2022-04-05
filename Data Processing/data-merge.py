@@ -41,7 +41,7 @@ df = df.iloc[2:]
 
 
 #%% save data to CSV
-# df.to_csv('Elprices.csv')
+df.to_csv('Elprices.csv')
 
 #%% Load Data
 df = pd.read_csv('Elprices.csv')
@@ -60,3 +60,33 @@ df.to_csv('Elprices.csv')
 
 #%% Load dataset
 df = pd.read_csv('Elprices.csv', index_col='HourDK', parse_dates=True)
+
+#%% find extreme outlier which is probably measurement error in DK1 series around mid 2013
+print(df.index[df['DK1'] > 800].tolist())
+print(df['2013-06-07 06:00:00':'2013-06-07 12:00:00']['DK1'])
+
+#%% replace outlier with NA first and then last observation carried forward 
+df.loc[df.DK1 > 800] = 50.60
+
+#%% save data to CSV
+df.to_csv('Elprices.csv')
+
+#%% Load dataset
+df = pd.read_csv('Elprices.csv', index_col='HourDK', parse_dates=True)
+
+#%% Check for Datatypes
+print(df.info())
+
+#%% check if outliers are gone
+print(df['2013-06-07 06:00:00':'2013-06-07 12:00:00']['DK1'])
+
+#%% Split dataset into NP-LMV and NP-HMV
+NP_LMV = df['2012-03-01':'2017-03-01']
+NP_HMV = df['2017-03-01':'2022-03-01']
+
+#%% Save new datasets as CSV for reimport
+NP_LMV.to_csv('NP-LMV.csv')
+NP_HMV.to_csv('NP-HMV.csv')
+
+
+
