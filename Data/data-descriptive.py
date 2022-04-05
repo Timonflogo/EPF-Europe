@@ -33,8 +33,16 @@ rcParams['font.family'] = "sans-serif"
 # rcParams['text.usetex'] = True
 
 #%% Import dataset
-df = pd.read_csv('Elprices.csv', index_col='HourDK', parse_dates=True) 
+LMV = pd.read_csv('NP-LMV.csv', index_col='HourDK', parse_dates=True)
+HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
 
 
-#%% get descriptive statistics
-df.describe()
+#%% get descriptive statistics for NP_LMV
+print("LMV descriptive statistics")
+pd.options.display.max_columns = LMV.shape[1]
+print(round(LMV.describe(include='all'),2))
+
+#%% get descriptive statistics for NP_HMV
+print("HMV descriptive statistics")
+pd.options.display.max_columns = HMV.shape[1]
+print(round(HMV.describe(include='all'),2))
