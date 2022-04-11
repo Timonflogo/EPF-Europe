@@ -29,4 +29,16 @@ rcParams['font.family'] = "sans-serif"
 LMV = pd.read_csv('NP-LMV.csv', index_col='HourDK', parse_dates=True)
 HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
 
-#%%
+#%% import libraries for AR-based models
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.graphics.tsaplots import plot_acf,plot_pacf # for determining (p,q) orders
+from statsmodels.tsa.seasonal import seasonal_decompose 
+from statsmodels.tools.eval_measures import mse,rmse     # for ETS Plots
+from pmdarima import auto_arima 
+
+#%% reduce aseries load to enable auto arima
+existing = ["DE", "DK1", "DK2", "SE3", "SE4", "NO2"]
+new = ["DE_HMV", "DK1_HMV", "DK2_HMV", "SE3_HMV", "SE4_HMV", "NO2_HMV"]
+for column in HMV.columns[0:]:
+    column = HMV[column]
+    

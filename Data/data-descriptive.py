@@ -90,3 +90,5 @@ print(bcolors.BOLD + bcolors.UNDERLINE + "RUN ADF TESTS ON LMV SERIES:" + bcolor
 for column in LMV.columns[0:]:
     print(bcolors.UNDERLINE + "ADF Testing for " + column + " Series of Type LMV:" + bcolors.ENDC)
     adf_test(LMV[column])
+    
+#%% 
