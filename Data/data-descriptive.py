@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr  5 12:37:05 2022
-
-@author: timon
-"""
-
 #%% import libraries
 import pandas as pd
 import seaborn as sns
@@ -46,3 +39,54 @@ print(round(LMV.describe(include='all'),2))
 print("HMV descriptive statistics")
 pd.options.display.max_columns = HMV.shape[1]
 print(round(HMV.describe(include='all'),2))
+
+#%% Create Class for colouyr coding of ADF test results to enhance readability in the terminal
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[36m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[31m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+#%% Define ADF test function
+from statsmodels.tsa.stattools import adfuller
+
+def adf_test(series,title=''):
+    """
+    Pass in a time series and an optional title, returns an ADF report
+    """
+    print(f'Augmented Dickey-Fuller Test: {title}')
+    result = adfuller(series.dropna(),autolag='AIC') # .dropna() handles differenced data
+    
+    labels = ['ADF test statistic','p-value','# lags used','# observations']
+    out = pd.Series(result[0:4],index=labels)
+
+    for key,val in result[4].items():
+        out[f'critical value ({key})']=val
+        
+    print(out.to_string())          # .to_string() removes the line "dtype: float64"
+    
+    if result[1] <= 0.05:
+        print("Strong evidence against the null hypothesis{bcolors.ENDC}")
+        print("Reject the null hypothesis")
+        print(bcolors.OKBLUE + series.name + " Series Data has no unit root and is stationary" + bcolors.ENDC)
+    else:
+        print("Weak evidence against the null hypothesis")
+        print("Fail to reject the null hypothesis")
+        print(bcolors.WARNING + series.name + " Series Data has a unit root and is non-stationary " + bcolors.ENDC)
+
+#%% run ADF test on all HMV series     
+print(bcolors.BOLD + bcolors.UNDERLINE + "RUN ADF TESTS ON HMV SERIES:" + bcolors.ENDC)  
+for column in HMV.columns[0:]:
+    print(bcolors.UNDERLINE + "ADF Testing for " + column + " Series of Type HMV:" + bcolors.ENDC)
+    adf_test(HMV[column])
+    
+#%% run ADF test on all LMV series 
+print(bcolors.BOLD + bcolors.UNDERLINE + "RUN ADF TESTS ON LMV SERIES:" + bcolors.ENDC) 
+for column in LMV.columns[0:]:
+    print(bcolors.UNDERLINE + "ADF Testing for " + column + " Series of Type LMV:" + bcolors.ENDC)
+    adf_test(LMV[column])
