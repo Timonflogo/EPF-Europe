@@ -25,6 +25,18 @@ rcParams['figure.figsize'] = 20, 12
 rcParams['font.family'] = "sans-serif"
 # rcParams['text.usetex'] = True
 
+#%% Create Class for colour coding of ADF test results to enhance readability in the terminal
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[36m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[31m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 #%% Import dataset
 LMV = pd.read_csv('NP-LMV.csv', index_col='HourDK', parse_dates=True)
 HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
@@ -36,9 +48,15 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tools.eval_measures import mse,rmse     # for ETS Plots
 from pmdarima import auto_arima 
 
-#%% reduce aseries load to enable auto arima
-existing = ["DE", "DK1", "DK2", "SE3", "SE4", "NO2"]
-new = ["DE_HMV", "DK1_HMV", "DK2_HMV", "SE3_HMV", "SE4_HMV", "NO2_HMV"]
-for column in HMV.columns[0:]:
-    column = HMV[column]
+#%% reduce LMV and HMV series load to enable auto arima
+LMV_autoarima = LMV['2016-12-01':'2017-03-01']
+HMV_autoarima = HMV['2021-12-01':'2022-03-01']
+
+#%% Run autorima on all series and retrieve best model specification for forecasting
+for series in LMV.columns[0:]:
+    print(bcolors.UNDERLINE + 'Estimating Best ARIMA model for: ' + series + bcolors.ENDC)
+    print(auto_arima(LMV[series]).summary())
+    
+
+
     
