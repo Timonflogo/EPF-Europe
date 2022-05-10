@@ -12,6 +12,8 @@ from matplotlib import pyplot
 from pylab import rcParams
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 from matplotlib import rc
 from pandas.plotting import register_matplotlib_converters
 
@@ -70,7 +72,16 @@ d = {}
 for name in LMV.columns[0:]:
     d[name] = LMV[name]
 
-#%% import libraries 
+#%% def function for timing
+def timing(f):
+    def wrap(*args, **kwargs):
+        time1 = time.time()
+        ret = f(*args, **kwargs)
+        time2 = time.time()
+        print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
+
+        return ret
+    return wrap
     
 #%% create series_to_supervised function to enable supervised training for XGBoost
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
@@ -141,7 +152,7 @@ for i in HMV.columns[0:]:
     exec(text)
 
 #%% create train and test sets of type LMV for XGBoost 
-LMV_DEtrainX, LMV_DEtrainy = LMV_DE[:len(LMV_DE)-   168], LMV_DE[len(LMV_DE)-168:]
+LMV_DEtrainX, LMV_DEtrainy = LMV_DE[:len(LMV_DE)-168], LMV_DE[len(LMV_DE)-168:]
 LMV_DK1trainX, LMV_DK1trainy = LMV_DK1[:len(LMV_DK1)-168], LMV_DK1[len(LMV_DK1)-168:]
 LMV_DK2trainX, LMV_DK2trainy = LMV_DK2[:len(LMV_DK2)-168], LMV_DK2[len(LMV_DK2)-168:]
 LMV_NO2trainX, LMV_NO2trainy = LMV_NO2[:len(LMV_NO2)-168], LMV_NO2[len(LMV_NO2)-168:]
