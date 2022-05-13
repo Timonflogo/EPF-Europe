@@ -87,7 +87,7 @@ scaled_test = scaler.transform(test_DE)
 # Let's define to get 168 Days back wich represents one week and then predict the next week out
 n_input = n_input
 n_features = 1
-generator = TimeseriesGenerator(scaled_train, scaled_train, length=n_input, batch_size=32)
+generator = TimeseriesGenerator(scaled_train, scaled_train, length=n_input, batch_size=10)
 
 # Check Generated time series object 
 len(scaled_train)
@@ -100,7 +100,9 @@ print(f'Predict this y: \n {y}')
 #%% DEFINE THE MODEL 
 # define model
 model = Sequential()
-model.add(LSTM(16, activation='tanh', input_shape=(n_input, n_features)))
+model.add(LSTM(100, activation='tanh', 
+               input_shape=(n_input, n_features),
+               dropout=0.1))
 model.add(Dense(1))
 # comile model
 model.compile(optimizer='adam', loss='mse')
@@ -114,10 +116,10 @@ callback = EarlyStopping(monitor='loss', patience=5)
 #%% fit model
 import time
 start_time = time.time()
-model.fit_generator(generator,epochs=10,callbacks=callback,shuffle=False)
+model.fit_generator(generator,epochs=100,callbacks=callback,shuffle=False)
 LSTM_DE_time = (time.time() - start_time)
 
-#%% model performance
+ #%% model performance
 model.history.history.keys()
 loss_per_epoch = model.history.history['loss']
 plt.plot(range(len(loss_per_epoch)),loss_per_epoch)
@@ -157,7 +159,7 @@ test_DE['LSTM'] = true_predictions
 
 #%% plot predictions 
 plt.plot(test_DE['DE'], label="DE")
-plt.plot(test_DE['LSTM'], linestyle="--", label="LSTM")
+plt.plot(test_DE['LSTM'], linestyle="--", label="LSTM", color='red')
 plt.legend()
 plt.show()
 

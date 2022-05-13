@@ -29,6 +29,71 @@ rcParams['font.family'] = "sans-serif"
 LMV = pd.read_csv('NP-LMV.csv', index_col='HourDK', parse_dates=True)
 HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
 
+#%% print distribution plots HMV
+# fig, axes = plt.subplots(2)
+fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+fig.suptitle('NP-HMV Series distribution')
+
+
+sns.distplot(HMV['DE'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,0]
+                 )
+sns.distplot(HMV['DK1'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,1]
+                 )
+sns.distplot(HMV['DK2'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,2]
+                 )
+sns.distplot(HMV['SE3'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,0]
+                 )
+sns.distplot(HMV['SE4'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,1]
+                 )
+sns.distplot(HMV['NO2'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,2]
+                 )
+
+#%% print distribution plots LMV
+# fig, axes = plt.subplots(2)
+fig, axes = plt.subplots(2, 3, figsize=(20, 8))
+
+fig.suptitle('NP-LMV Series distribution')
+
+
+sns.distplot(LMV['DE'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,0]
+                 )
+sns.distplot(LMV['DK1'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,1]
+                 )
+sns.distplot(LMV['DK2'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[0,2]
+                 )
+sns.distplot(LMV['SE3'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,0]
+                 )
+sns.distplot(LMV['SE4'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,1]
+                 )
+sns.distplot(LMV['NO2'], hist = False, kde = True,
+                 kde_kws = {'shade': True, 'linewidth': 3}, 
+                 ax = axes[1,2]
+                 )
+
+
 
 #%% get descriptive statistics for NP_LMV
 print("LMV descriptive statistics")

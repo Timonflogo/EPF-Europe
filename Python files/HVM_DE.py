@@ -40,8 +40,10 @@ class bcolors:
     UNDERLINE = '\033[4m'
     
 #%% import dataset
-HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
-DE = HMV[['DE']]
+df = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True)
+df.reset_index(drop=False, inplace=True)
+DE = df[['DE']]
+# DE.index = pd.DatetimeIndex(DE.index).to_period('H')
 
 ###############################################################################
 # STATISTICAL MODELS
@@ -82,6 +84,8 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.graphics.tsaplots import plot_acf,plot_pacf # for determining (p,q) orders
 from statsmodels.tsa.seasonal import seasonal_decompose 
 from statsmodels.tools.eval_measures import mse,rmse     # for ETS Plots
+from sklearn.metrics import mean_absolute_error as mae
+from sklearn.metrics import mean_absolute_percentage_error as mape
 from pmdarima import auto_arima 
 
 #%% reduce DE series load to enable auto arima
@@ -105,40 +109,36 @@ len(DE) == len(train) + len(test) # True
 start = len(train)
 end = len(train)+len(test)-1
 
-#%% create dataframe for evaluation metrics
-test_eval = test
+#%% create dataframe for time computed
+time_compute = pd.DataFrame()
 
 #%% Fit AR model
-model_AR = SARIMAX(train[['DE']],order=(4,0,0),enforce_invertibility=False)
+model_AR = SARIMAX(train['DE'],order=(4,0,0),enforce_invertibility=False)
 
 import time
-start_time_AR = time.time()
+start_time = time.time()
 results_AR = model_AR.fit()
 end_time_AR = time.time()
-time_DE_AR = (end_time_AR - start_time_AR)
+time_DE_AR = (time.time() - start_time)
 results_AR.summary()
 
 # predict
 predictions_AR = results_AR.predict(start=start, end=end).rename('AR(4) Predictions')
 
-# append predictions to test_eval dataframe
-test_eval['AR(4) Predictions'] = predictions_AR
 
 #%% Fit ARIMA model
 model_ARIMA = SARIMAX(train['DE'],order=(4,1,3),enforce_invertibility=False)
 
 import time
-start_time_ARIMA = time.time()
+start_time = time.time()
 results_ARIMA = model_ARIMA.fit()
-end_time_ARIMA = time.time()
-time_DE_ARIMA = (end_time_ARIMA - start_time_ARIMA)
+end_time_AR = time.time()
+time_DE_ARIMA = (time.time() - start_time)
 results_ARIMA.summary()
 
 # predict
 predictions_ARIMA = results_ARIMA.predict(start=start, end=end).rename('ARIMA(4,1,3) Predictions')
 
-# append predictions to test_eval dataframe
-test_eval['ARIMA(4,1,3) Predictions'] = predictions_ARIMA
 
 #%% run auto arima on dataset with seasonal is TRUE
 # print(auto_arima(DE_autoarima, seasonal=True, m=24))
@@ -148,26 +148,58 @@ test_eval['ARIMA(4,1,3) Predictions'] = predictions_ARIMA
 model_SARIMA = SARIMAX(train['DE'],order=(1,1,0),seasonal_order=(2,0,0,24),enforce_invertibility=False)
 
 import time
-start_time_SARIMA = time.time()
+start_time = time.time()
 results_SARIMA = model_SARIMA.fit()
-end_time_SARIMA = time.time()
-time_DE_SARIMA = (end_time_SARIMA - start_time_SARIMA)
+end_time_AR = time.time()
+time_DE_SARIMA = (time.time() - start_time)
 results_SARIMA.summary()
 
 # predict
 predictions_SARIMA = results_SARIMA.predict(start=start, end=end).rename('SARIMA(1,1,0)(2,0,0,24) Predictions')
 
-# append predictions to test_eval dataframe
-test_eval['SARIMA(1,1,0)(2,0,0,24) Predictions'] = predictions_SARIMA
 
 #%% get evaluation metrics
-error_AR = mape(test['DE'], predictions_AR)
-error_ARIMA = mape(test['DE'], predictions_ARIMA)
-error_SARIMA = maper(test['DE'], predictions_SARIMA)
+error_DE_AR = mape(test['DE'], predictions_AR)*100
+error_DE_ARIMA = mape(test['DE'], predictions_ARIMA)*100
+error_DE_SARIMA = mape(test['DE'], predictions_SARIMA)*100
+
+print(error_DE_AR, error_DE_ARIMA, error_DE_SARIMA)
+
+#%%test_eval wrangling
+test_eval = test
+# reset index
+#test_eval.drop('HourDK',axis=1, inplace=True)
+#test_eval
+
+#%% append stat predictions
+test_eval["AR(4,0,0)"] = predictions_AR
+test_eval["ARIMA(4,1,3)"] = predictions_ARIMA
+test_eval["SARIMA(1,1,0)(2,0,0,24)"] = predictions_SARIMA
+
+# reset index for plotting
+test_eval.reset_index(inplace=True)
+test_eval.drop('index',axis=1, inplace=True)
+
+#%% plot predictions
+# define plot parameters
+title='Statistical forecasting performance DE'
+ylabel='Electricity Price'
+xlabel=''
+
+ax = test_eval['DE'].plot(legend=True,figsize=(20,6),title=title)
+test_eval['AR(4,0,0)'].plot(linestyle = '--', legend=True, color='orange')
+test_eval['ARIMA(4,1,3)'].plot(linestyle = '--', legend=True, color='green')
+test_eval['SARIMA(1,1,0)(2,0,0,24)'].plot(linestyle = '--', legend=True,color='purple')
+ax.autoscale(axis='x',tight=True)
+ax.set(xlabel=xlabel, ylabel=ylabel)
+
+#%% save to statistical forecast to dataframe
+# test_eval.to_csv('DE-stat-models-24')
 
 ###############################################################################
 # MACHINE LEARNING MODELS
 ###############################################################################
+#%% XGBOOST MODEL
 #%% import libraries
 from numpy import asarray
 from pandas import read_csv
@@ -264,21 +296,23 @@ def walk_forward_validation(data, n_test):
 	return error, test[:, -1], predictions
 
 #%% Run XGBoost on DE series
-values_HMV_DE = HMV[['DE']].values
+values_HMV_DE = df[['DE']].values
 # transform the time series data into supervised learning
 data_HMV_DE = series_to_supervised(values_HMV_DE, n_in=24)
 # evaluate
 import time
 start_time = time.time()
-mape_DE, y_DE, yhat_DE = walk_forward_validation(data_HMV_DE, 24)
+mape_DE_XGBoost, y_DE, yhat_DE = walk_forward_validation(data_HMV_DE, 24)
 time_DE_XGBoost = (time.time() - start_time)
-print('MAPE: %.3f' % mape_DE)
-# plot expected vs preducted
-pyplot.plot(y_DE, label='Expected')
-pyplot.plot(yhat_DE, label='Predicted')
-pyplot.legend()
-pyplot.show() 
+print('MAPE: %.3f' % mape_DE_XGBoost)
+error_DE_XGBoost = mape_DE_XGBoost *100
 
+#%% append XGBOOST metrics to test and time dataframes
+test_eval['XGBoost'] = yhat_DE
+
+print(error_DE_XGBoost)
+
+#%% SVR MODEL
 #%% import libraries for SVR
 import sys
 sys.path.append('../../')
@@ -292,15 +326,451 @@ import math
 
 from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler
-from common.utils import load_data, mape
-   
-#%% Create training and test data
+from sklearn.metrics import mean_absolute_percentage_error as mape
+
+#%% import dataset
+HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
+DE = HMV[['DE']]
+
+#%% define forecasting horizon
+horizon = 28
+
+#%% train test split
 # we will go with a train-test split such that our test set represents 168 Hours worth of data
-train =  DE[:len(DE)-168]
-test = DE[len(DE)-168:]
+train =  DE[:len(DE)-horizon]
+test = DE[len(DE)-horizon:]
 len(DE) == len(train) + len(test) # True
 
 # forecast start and end
 # obtain predicted results
 start = len(train)
 end = len(train)+len(test)-1
+
+#%% print shapes
+print('Training data shape: ', train.shape)
+print('Test data shape: ', test.shape)
+
+#%% scale data
+scaler = MinMaxScaler()
+train['DE'] = scaler.fit_transform(train)
+
+test['DE'] = scaler.transform(test)
+
+#%% Create data with time-steps
+
+# Converting to numpy arrays
+train_data = train.values
+test_data = test.values
+
+# determine number of timesteps. If 5 then inputs will be 4 and output will be the 5th timestep
+timesteps=5
+
+# Converting training data to 2D tensor using nested list comprehension:
+train_data_timesteps=np.array([[j for j in train_data[i:i+timesteps]] for i in range(0,len(train_data)-timesteps+1)])[:,:,0]
+print("train data shape",train_data_timesteps.shape)
+
+# Converting testing data to 2D tensor:
+test_data_timesteps=np.array([[j for j in test_data[i:i+timesteps]] for i in range(0,len(test_data)-timesteps+1)])[:,:,0]
+print("test data shape", test_data_timesteps.shape)
+
+#%% Selecting inputs and outputs from training and testing data:
+x_train, y_train = train_data_timesteps[:,:timesteps-1],train_data_timesteps[:,[timesteps-1]]
+x_test, y_test = test_data_timesteps[:,:timesteps-1],test_data_timesteps[:,[timesteps-1]]
+
+print(x_train.shape, y_train.shape)
+print(x_test.shape, y_test.shape)
+
+# Implement SVR 
+model = SVR(kernel='rbf',
+            gamma=0.5,
+            C=10,
+            epsilon = 0.05,
+            degree=3,
+            shrinking=True)
+
+#%% run SVR
+import time
+start_time = time.time()
+# fit the model on training data
+print("running: ", model.fit(x_train, y_train[:,0]))
+time_DE_SVR = (time.time() - start_time)
+
+#%% make model predictions
+y_train_pred = model.predict(x_train).reshape(-1,1)
+y_test_pred = model.predict(x_test).reshape(-1,1)
+
+print(y_train_pred.shape, y_test_pred.shape)
+
+#%% inverse transform data
+y_train_pred = scaler.inverse_transform(y_train_pred)
+y_test_pred = scaler.inverse_transform(y_test_pred)
+
+print(len(y_train_pred), len(y_test_pred))
+
+y_train = scaler.inverse_transform(y_train)
+y_test = scaler.inverse_transform(y_test)
+
+print(y_train_pred.shape, y_test_pred.shape)
+
+#%% plot predicitons for testing data
+plt.figure(figsize=(12,6))
+plt.plot(y_test, color = 'blue', linewidth=2.0, alpha = 0.6)
+plt.plot(y_test_pred, color = 'red', linewidth=0.8)
+plt.legend(['Actual','Predicted'])
+plt.xlabel('Timestamp')
+plt.title("Test data prediction")
+plt.show()
+
+#%% get MAPE for test data
+print('MAPE for testing data: ', mape(y_test_pred, y_test)*100, '%')
+
+# assign to variable
+error_DE_SVR = mape(y_test_pred, y_test)*100
+
+#%% append SVR metrics to evaluation dataframes
+test_eval['SVR'] = y_test_pred
+
+print(error_DE_SVR)
+
+#%% plot Statistical and ml
+title='ML forecasting performance DE'
+ylabel='Electricity Price'
+xlabel=''
+
+ax = test_eval['DE'].plot(legend=True,figsize=(20,12),title=title)
+test_eval['AR(4,0,0)'].plot(linestyle = '--', legend=True, color='orange')
+test_eval['ARIMA(4,1,3)'].plot(linestyle = '--', legend=True, color='green')
+test_eval['SARIMA(1,1,0)(2,0,0,24)'].plot(linestyle = '--', legend=True,color='purple')
+test_eval['SVR'].plot(linestyle = '--', legend=True, color='magenta')
+test_eval['XGBoost'].plot(linestyle = '--', legend=True, color='cyan')
+ax.autoscale(axis='x',tight=True)
+ax.set(xlabel=xlabel, ylabel=ylabel)
+
+#%% plot test eval_ml
+
+
+###############################################################################
+# DEEP LEARNING MODELS
+###############################################################################
+#LSTM MODEL
+#%% import libraries
+import tensorflow as tf
+import os
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+#%% Setup plotting environment
+from pylab import rcParams
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib import rc
+from pandas.plotting import register_matplotlib_converters
+
+mpl.rcParams['figure.figsize'] = (12, 6)
+mpl.rcParams['axes.grid'] = False
+mpl.rcParams['figure.dpi'] = 300
+# set styles
+
+# set seaborn style
+register_matplotlib_converters()
+
+# set seaborn style
+sns.set(style='whitegrid', palette='deep', font_scale=1.8)
+
+# set plotting parameters
+rcParams['figure.figsize'] = 20, 12  
+rcParams['font.family'] = "sans-serif"
+rc('lines', linewidth=4, linestyle='-')
+# rcParams['text.usetex'] = True
+
+#%% import dataset
+HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
+DE = HMV['DE']
+
+#%% create windowing function
+def df_to_supervised(df, window_size=5):
+    df_as_np = df.to_numpy()
+    X = []
+    y = []
+    for i in range(len(df_as_np)-window_size):
+        row = [[a] for a in df_as_np[i:i+window_size]]
+        X.append(row)
+        label = df_as_np[i+window_size]
+        y.append(label)
+    return np.array(X), np.array(y)
+
+#%% use df_to_X_y function
+WINDOW_SIZE = 24
+X, y = df_to_supervised(DE, WINDOW_SIZE)
+print(X.shape, y.shape)
+
+#%% create train, val, and test set
+val_horizon = 48
+test_horizon = 24
+
+X_train, y_train = X[:-(val_horizon + test_horizon)], y[:-(val_horizon + test_horizon)]
+X_val, y_val = X[len(X_train): (len(X_train) + val_horizon)], y[len(X_train): (len(X_train) + val_horizon)]
+X_test, y_test = X[(len(X_train) + val_horizon):], y[(len(X_train) + val_horizon):]
+    
+# get shapes
+print(X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape)
+
+#%% import libraries for Deep learning
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import *
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.losses import MeanSquaredError
+from tensorflow.keras.metrics import RootMeanSquaredError
+from tensorflow.keras.metrics import MeanAbsoluteError
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+
+#%% BUILD LSTM
+model_LSTM = Sequential()
+model_LSTM.add(InputLayer((X_train.shape[1], X_train.shape[2])))
+model_LSTM.add(LSTM(64))
+model_LSTM.add(Dense(8, activation='relu'))
+model_LSTM.add(Dense(1, activation='linear'))
+
+model_LSTM.summary()
+
+#%% callbacks
+cp = ModelCheckpoint('model_DE_LSTM/', save_best_only=True)
+
+#%% compile
+model_LSTM.compile(loss='mse',
+               optimizer=Adam(learning_rate=0.0001),
+               metrics=[MeanAbsoluteError()])
+
+
+#%% fit model
+import time
+start_time = time.time()
+
+history = model_LSTM.fit(X_train, y_train,
+                     validation_data=(X_val, y_val),
+                     epochs=10,
+                     callbacks=[cp])
+
+time_DE_LSTM = (time.time() - start_time)
+
+
+#%% plot history loss 
+plt.plot(history.history['loss'], label='train')
+plt.plot(history.history['val_loss'], label='test')
+plt.title('LSTM train and validation loss')
+plt.legend()
+plt.show()
+
+#%% load the model
+from tensorflow.keras.models import load_model
+model_LSTM = load_model('model_DE_LSTM/')
+
+#%% prediction Train and plot train results
+train_predictions = model_LSTM.predict(X_train).flatten()
+train_results = pd.DataFrame(data={'Train Predictions': train_predictions, 'Actuals': y_train})
+print(train_results)
+
+import matplotlib.pyplot as plt
+plt.plot(train_results['Train Predictions'][-100:])
+plt.plot(train_results['Actuals'][-100:])
+
+#%% predict Val and plot val results
+val_predictions = model_LSTM.predict(X_val).flatten()
+val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Actuals':y_val})
+print(val_results)
+
+plt.plot(val_results['Val Predictions'])
+plt.plot(val_results['Actuals'])
+
+#%% predict test and plot test results
+test_predictions = model_LSTM.predict(X_test).flatten()
+test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Actuals':y_test})
+print(test_results)
+
+plt.plot(test_results['Test Predictions'])
+plt.plot(test_results['Actuals'])
+
+#%% get error metrics 
+from sklearn.metrics import mean_absolute_percentage_error as mape
+error_DE_LSTM = mape(test_results['Actuals'], test_results['Test Predictions'])*100
+print(error_DE_LSTM)
+
+#%% append LSTM metrics to evaluation dataframes
+test_eval['LSTM'] = test_predictions
+
+#%% GRU MODEL
+#%% import libraries
+import tensorflow as tf
+import os
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+#%% Setup plotting environment
+from pylab import rcParams
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib import rc
+from pandas.plotting import register_matplotlib_converters
+
+mpl.rcParams['figure.figsize'] = (12, 6)
+mpl.rcParams['axes.grid'] = False
+mpl.rcParams['figure.dpi'] = 300
+# set styles
+
+# set seaborn style
+register_matplotlib_converters()
+
+# set seaborn style
+sns.set(style='whitegrid', palette='deep', font_scale=1.8)
+
+# set plotting parameters
+rcParams['figure.figsize'] = 20, 12  
+rcParams['font.family'] = "sans-serif"
+rc('lines', linewidth=4, linestyle='-')
+# rcParams['text.usetex'] = True
+
+#%% import dataset
+HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True) 
+DE = HMV['DE']
+
+#%% create windowing function
+def df_to_supervised(df, window_size=5):
+    df_as_np = df.to_numpy()
+    X = []
+    y = []
+    for i in range(len(df_as_np)-window_size):
+        row = [[a] for a in df_as_np[i:i+window_size]]
+        X.append(row)
+        label = df_as_np[i+window_size]
+        y.append(label)
+    return np.array(X), np.array(y)
+
+#%% use df_to_X_y function
+WINDOW_SIZE = 24
+X, y = df_to_supervised(DE, WINDOW_SIZE)
+print(X.shape, y.shape)
+
+#%% create train, val, and test set
+val_horizon = 48
+test_horizon = 24
+
+X_train, y_train = X[:-(val_horizon + test_horizon)], y[:-(val_horizon + test_horizon)]
+X_val, y_val = X[len(X_train): (len(X_train) + val_horizon)], y[len(X_train): (len(X_train) + val_horizon)]
+X_test, y_test = X[(len(X_train) + val_horizon):], y[(len(X_train) + val_horizon):]
+    
+# get shapes
+X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape
+
+#%% import libraries for Deep learning
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import *
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.losses import MeanSquaredError
+from tensorflow.keras.metrics import RootMeanSquaredError
+from tensorflow.keras.optimizers import Adam
+
+#%% BUILD LSTM
+model_GRU = Sequential()
+model_GRU.add(InputLayer((X_train.shape[1], X_train.shape[2])))
+model_GRU.add(GRU(64))
+model_GRU.add(Dense(8, 'relu'))
+model_GRU.add(Dense(1, 'linear'))
+
+model_GRU.summary()
+
+#%% callbacks
+cp = ModelCheckpoint('model_DE_GRU/', save_best_only=True)
+
+#%% compile
+model_GRU.compile(loss='mse',
+               optimizer=Adam(learning_rate=0.0001),
+               metrics=[RootMeanSquaredError()])
+
+#%% fit model
+import time
+start_time = time.time()
+
+history = model_GRU.fit(X_train, y_train,
+                    validation_data=(X_val, y_val),
+                    epochs=10,
+                    callbacks=[cp])
+
+time_DE_GRU = (time.time() - start_time)
+
+#%% plot history loss 
+plt.plot(history.history['loss'], label='train')
+plt.plot(history.history['val_loss'], label='test')
+plt.title('GRU train and validation loss')
+plt.legend()
+plt.show()
+
+#%% load the model
+from tensorflow.keras.models import load_model
+model_GRU = load_model('model_DE_GRU/')
+
+#%% prediction Train and plot train results
+train_predictions = model_GRU.predict(X_train).flatten()
+train_results = pd.DataFrame(data={'Train Predictions': train_predictions, 'Actuals': y_train})
+print(train_results)
+
+import matplotlib.pyplot as plt
+plt.plot(train_results['Train Predictions'][-100:])
+plt.plot(train_results['Actuals'][-100:])
+
+#%% predict Val and plot val results
+val_predictions = model_GRU.predict(X_val).flatten()
+val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Actuals':y_val})
+print(val_results)
+
+plt.plot(val_results['Val Predictions'])
+plt.plot(val_results['Actuals'])
+
+#%% predict test and plot test results
+test_predictions = model_GRU.predict(X_test).flatten()
+test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Actuals':y_test})
+print(test_results)
+
+plt.plot(test_results['Test Predictions'])
+plt.plot(test_results['Actuals'])
+
+#%% get error metrics 
+from sklearn.metrics import mean_absolute_percentage_error as mape
+error_DE_GRU = mape(test_results['Actuals'], test_results['Test Predictions'])*100
+print(error_DE_GRU)
+
+#%% append GRU metrics to evaluation dataframes
+test_eval['GRU'] = test_predictions
+
+#%% save test_eval dataframe for plotting 
+test_eval.to_csv('test_eval_DE.csv')
+
+#%% get dataframe with all mape values
+evaluation_metrics = pd.DataFrame()
+
+evaluation_metrics = evaluation_metrics.append({'AR': error_DE_AR,
+                                                'ARIMA': error_DE_ARIMA,
+                                                'SARIMA': error_DE_SARIMA,
+                                                'XGBoost': error_DE_XGBoost,
+                                                'SVR': error_DE_SVR,
+                                                'LSTM': error_DE_LSTM,
+                                                'GRU': error_DE_GRU},
+                                               ignore_index=True
+                                               )
+
+evaluation_metrics.to_csv('evaluation-metrics-DE.csv')
+
+#%% get computation time for all algorithms 
+# append compute time to list
+time_compute = time_compute.append({'time_DE_AR': time_DE_AR,
+                                    'time_DE_ARIMA': time_DE_ARIMA,
+                                    'time_DE_SARIMA': time_DE_SARIMA,
+                                    'time_DE_XGBoost': time_DE_XGBoost,
+                                    'time_DE_SVR': time_DE_SVR,
+                                    'time_DE_LSTM': time_DE_LSTM,
+                                    'time_DE_GRU': time_DE_GRU}, 
+                                    ignore_index=True)
+
+time_compute.to_csv('time-compute-DE.csv')
