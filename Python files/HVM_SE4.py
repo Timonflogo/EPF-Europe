@@ -91,8 +91,8 @@ from pmdarima import auto_arima
 SE4_autoarima = SE4['2022-01-01':'2022-03-01']
 
  #%% run auto arima on dataset
-print(auto_arima(SE4_autoarima))
-# optimal model is ARIMA(1,1,2)(0,0,0)[0]
+# print(auto_arima(SE4_autoarima))
+# optimal model is ARIMA(3,1,2)(0,0,0)[0]
 
 #%% reset index 
 SE4.reset_index(drop=False, inplace=True)
@@ -115,7 +115,7 @@ end = len(train)+len(test)-1
 time_compute = pd.DataFrame()
 
 #%% Fit AR model
-model_AR = SARIMAX(train['SE4'],order=(1,0,0),enforce_invertibility=False)
+model_AR = SARIMAX(train['SE4'],order=(3,0,0),enforce_invertibility=False)
 
 import time
 start_time = time.time()
@@ -125,11 +125,11 @@ time_SE4_AR = (time.time() - start_time)
 results_AR.summary()
 
 # predict
-predictions_AR = results_AR.predict(start=start, end=end).rename('AR(1) Predictions')
+predictions_AR = results_AR.predict(start=start, end=end).rename('AR(3) Predictions')
 
 
 #%% Fit ARIMA model
-model_ARIMA = SARIMAX(train['SE4'],order=(1,1,2),enforce_invertibility=False)
+model_ARIMA = SARIMAX(train['SE4'],order=(3,1,2),enforce_invertibility=False)
 
 import time
 start_time = time.time()
@@ -139,11 +139,11 @@ time_SE4_ARIMA = (time.time() - start_time)
 results_ARIMA.summary()
 
 # predict
-predictions_ARIMA = results_ARIMA.predict(start=start, end=end).rename('ARIMA(1,1,2) Predictions')
+predictions_ARIMA = results_ARIMA.predict(start=start, end=end).rename('ARIMA(3,1,2) Predictions')
 
 
 #%% run auto arima on dataset with seasonal is TRUE
-#print(auto_arima(SE4_autoarima, seasonal=True, m=24))
+print(auto_arima(SE4_autoarima, seasonal=True, m=24))
 # optimal model is ARIMA(4,1,0)(2,0,0)[24]
 
 #%% reduce train data
@@ -180,8 +180,8 @@ test_eval = test
 #test_eval
 
 #%% append stat predictions
-test_eval["AR(1)"] = predictions_AR
-test_eval["ARIMA(1,1,2)"] = predictions_ARIMA
+test_eval["AR(3)"] = predictions_AR
+test_eval["ARIMA(3,1,2)"] = predictions_ARIMA
 test_eval["SARIMA(4,1,0)(2,0,0,24)"] = predictions_SARIMA
 
 #%% reset index for plotting
@@ -195,8 +195,8 @@ ylabel='Electricity Price'
 xlabel=''
 
 ax = test_eval['SE4'].plot(legend=True,figsize=(20,6),title=title)
-test_eval['AR(1)'].plot(linestyle = '--', legend=True, color='orange')
-test_eval['ARIMA(1,1,2)'].plot(linestyle = '--', legend=True, color='green')
+test_eval['AR(3)'].plot(linestyle = '--', legend=True, color='orange')
+test_eval['ARIMA(3,1,2)'].plot(linestyle = '--', legend=True, color='green')
 test_eval['SARIMA(4,1,0)(2,0,0,24)'].plot(linestyle = '--', legend=True,color='purple')
 ax.autoscale(axis='x',tight=True)
 ax.set(xlabel=xlabel, ylabel=ylabel)
@@ -567,7 +567,7 @@ time_SE4_LSTM = (time.time() - start_time)
 #%% plot history loss 
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
-plt.title('DK1 LSTM train and validation loss')
+plt.title('SE4 LSTM train and validation loss')
 plt.legend()
 plt.show()
 
@@ -695,7 +695,7 @@ cp = ModelCheckpoint('model_SE4_GRU/', save_best_only=True)
 #%% compile
 model_GRU.compile(loss='mse',
                optimizer=Adam(learning_rate=0.0001),
-               metrics=[RootMeanSquaredError()])
+               metrics=[MeanAbsoluteError()])
 
 #%% fit model
 import time

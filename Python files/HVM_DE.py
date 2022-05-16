@@ -41,7 +41,6 @@ class bcolors:
     
 #%% import dataset
 df = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True)
-df.reset_index(drop=False, inplace=True)
 DE = df[['DE']]
 # DE.index = pd.DatetimeIndex(DE.index).to_period('H')
 
@@ -89,12 +88,15 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from pmdarima import auto_arima 
 
 #%% reduce DE series load to enable auto arima
-# DE_autoarima = DE['2021-12-01':'2022-03-01']
+DE_autoarima = DE['2022-01-01':'2022-03-01']
 
-#%% run auto arima on dataset
+ #%% run auto arima on dataset
 # print(auto_arima(DE_autoarima))
-# optimal model is ARIMA(4,1,3)(0,0,0)[0]
+# optimal model is ARIMA(3,1,2)(0,0,0)[0]
 
+#%% reset index 
+DE.reset_index(drop=False, inplace=True)
+DE = DE[['DE']]
 #%% define forecasting horizon
 horizon = 24
 
@@ -141,8 +143,11 @@ predictions_ARIMA = results_ARIMA.predict(start=start, end=end).rename('ARIMA(4,
 
 
 #%% run auto arima on dataset with seasonal is TRUE
-# print(auto_arima(DE_autoarima, seasonal=True, m=24))
+print(auto_arima(DE_autoarima, seasonal=True, m=24))
 # optimal model is ARIMA(1,1,0)(2,0,0)[24]
+
+#%% reduce train data
+train = train[-15000:]
 
 #%% Fit SARIMA model
 model_SARIMA = SARIMAX(train['DE'],order=(1,1,0),seasonal_order=(2,0,0,24),enforce_invertibility=False)
@@ -153,6 +158,9 @@ results_SARIMA = model_SARIMA.fit()
 end_time_AR = time.time()
 time_DE_SARIMA = (time.time() - start_time)
 results_SARIMA.summary()
+
+start = len(train)
+end = len(train)+len(test)-1
 
 # predict
 predictions_SARIMA = results_SARIMA.predict(start=start, end=end).rename('SARIMA(1,1,0)(2,0,0,24) Predictions')
@@ -172,11 +180,11 @@ test_eval = test
 #test_eval
 
 #%% append stat predictions
-test_eval["AR(4,0,0)"] = predictions_AR
+test_eval["AR(4)"] = predictions_AR
 test_eval["ARIMA(4,1,3)"] = predictions_ARIMA
 test_eval["SARIMA(1,1,0)(2,0,0,24)"] = predictions_SARIMA
 
-# reset index for plotting
+#%% reset index for plotting
 test_eval.reset_index(inplace=True)
 test_eval.drop('index',axis=1, inplace=True)
 
@@ -187,7 +195,7 @@ ylabel='Electricity Price'
 xlabel=''
 
 ax = test_eval['DE'].plot(legend=True,figsize=(20,6),title=title)
-test_eval['AR(4,0,0)'].plot(linestyle = '--', legend=True, color='orange')
+test_eval['AR(4)'].plot(linestyle = '--', legend=True, color='orange')
 test_eval['ARIMA(4,1,3)'].plot(linestyle = '--', legend=True, color='green')
 test_eval['SARIMA(1,1,0)(2,0,0,24)'].plot(linestyle = '--', legend=True,color='purple')
 ax.autoscale(axis='x',tight=True)
@@ -437,10 +445,10 @@ title='ML forecasting performance DE'
 ylabel='Electricity Price'
 xlabel=''
 
-ax = test_eval['DE'].plot(legend=True,figsize=(20,12),title=title)
-test_eval['AR(4,0,0)'].plot(linestyle = '--', legend=True, color='orange')
-test_eval['ARIMA(4,1,3)'].plot(linestyle = '--', legend=True, color='green')
-test_eval['SARIMA(1,1,0)(2,0,0,24)'].plot(linestyle = '--', legend=True,color='purple')
+ax = test_eval['DE'].plot(legend=True,figsize=(20,6),title=title)
+test_eval['AR(5)'].plot(linestyle = '--', legend=True, color='orange')
+test_eval['ARIMA(5,1,3)'].plot(linestyle = '--', legend=True, color='green')
+test_eval['SARIMA(3,1,1)(2,0,1,24)'].plot(linestyle = '--', legend=True,color='purple')
 test_eval['SVR'].plot(linestyle = '--', legend=True, color='magenta')
 test_eval['XGBoost'].plot(linestyle = '--', legend=True, color='cyan')
 ax.autoscale(axis='x',tight=True)
@@ -550,7 +558,7 @@ start_time = time.time()
 
 history = model_LSTM.fit(X_train, y_train,
                      validation_data=(X_val, y_val),
-                     epochs=10,
+                     epochs=30,
                      callbacks=[cp])
 
 time_DE_LSTM = (time.time() - start_time)
@@ -559,7 +567,7 @@ time_DE_LSTM = (time.time() - start_time)
 #%% plot history loss 
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
-plt.title('LSTM train and validation loss')
+plt.title('DE LSTM train and validation loss')
 plt.legend()
 plt.show()
 
@@ -687,7 +695,7 @@ cp = ModelCheckpoint('model_DE_GRU/', save_best_only=True)
 #%% compile
 model_GRU.compile(loss='mse',
                optimizer=Adam(learning_rate=0.0001),
-               metrics=[RootMeanSquaredError()])
+               metrics=[MeanAbsoluteError()])
 
 #%% fit model
 import time
@@ -695,7 +703,7 @@ start_time = time.time()
 
 history = model_GRU.fit(X_train, y_train,
                     validation_data=(X_val, y_val),
-                    epochs=10,
+                    epochs=30,
                     callbacks=[cp])
 
 time_DE_GRU = (time.time() - start_time)
@@ -703,7 +711,7 @@ time_DE_GRU = (time.time() - start_time)
 #%% plot history loss 
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
-plt.title('GRU train and validation loss')
+plt.title('DE GRU train and validation loss')
 plt.legend()
 plt.show()
 
@@ -774,3 +782,4 @@ time_compute = time_compute.append({'time_DE_AR': time_DE_AR,
                                     ignore_index=True)
 
 time_compute.to_csv('time-compute-DE.csv')
+
