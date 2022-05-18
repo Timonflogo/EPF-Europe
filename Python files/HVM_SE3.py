@@ -538,6 +538,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 model_LSTM = Sequential()
 model_LSTM.add(InputLayer((X_train.shape[1], X_train.shape[2])))
 model_LSTM.add(LSTM(64))
+model_LSTM.add(Dropout(0.2))
 model_LSTM.add(Dense(8, activation='relu'))
 model_LSTM.add(Dense(1, activation='linear'))
 
@@ -684,6 +685,7 @@ from tensorflow.keras.optimizers import Adam
 model_GRU = Sequential()
 model_GRU.add(InputLayer((X_train.shape[1], X_train.shape[2])))
 model_GRU.add(GRU(64))
+model_GRU.add(Dropout(0.2))
 model_GRU.add(Dense(8, 'relu'))
 model_GRU.add(Dense(1, 'linear'))
 

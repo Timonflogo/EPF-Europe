@@ -147,7 +147,7 @@ predictions_ARIMA = results_ARIMA.predict(start=start, end=end).rename('ARIMA(5,
 # optimal model is ARIMA(1,1,0)(2,0,0)[24]
 
 #%% reduce train data
-train = train[-15000:]
+train = train[-5000:]
 
 #%% Fit SARIMA model
 model_SARIMA = SARIMAX(train['NO2'],order=(3,1,1),seasonal_order=(2,0,1,24),enforce_invertibility=False)
@@ -538,6 +538,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 model_LSTM = Sequential()
 model_LSTM.add(InputLayer((X_train.shape[1], X_train.shape[2])))
 model_LSTM.add(LSTM(64))
+model_LSTM.add(Dropout(0.2))
 model_LSTM.add(Dense(8, activation='relu'))
 model_LSTM.add(Dense(1, activation='linear'))
 
@@ -684,6 +685,7 @@ from tensorflow.keras.optimizers import Adam
 model_GRU = Sequential()
 model_GRU.add(InputLayer((X_train.shape[1], X_train.shape[2])))
 model_GRU.add(GRU(64))
+model_GRU.add(Dropout(0.2))
 model_GRU.add(Dense(8, 'relu'))
 model_GRU.add(Dense(1, 'linear'))
 

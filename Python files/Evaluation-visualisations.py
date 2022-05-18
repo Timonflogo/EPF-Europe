@@ -88,6 +88,14 @@ ax6.plot(SE4.iloc[:,3], marker = 'x',color='y', linestyle = '--')
 ax6.set_ylabel('SE4')
 ax6.set_xlabel('time (H)')
 
+ax1.set_ylim([0, 400])
+ax2.set_ylim([0, 400])
+ax3.set_ylim([0, 400])
+ax4.set_ylim([0, 400])
+ax5.set_ylim([0, 400])
+ax6.set_ylim([0, 400])
+
+
 plt.show()
 
 #%% import data for plotting of ML forecast performance
@@ -133,6 +141,14 @@ ax6.plot(SE4.iloc[:,1], marker = 'x',color='c', linestyle = '--')
 ax6.plot(SE4.iloc[:,2], marker = 'x',color='r', linestyle = '--')
 ax6.set_ylabel('SE4')
 ax6.set_xlabel('time (H)')
+
+ax1.set_ylim([0, 400])
+ax2.set_ylim([0, 400])
+ax3.set_ylim([0, 400])
+ax4.set_ylim([0, 400])
+ax5.set_ylim([0, 400])
+ax6.set_ylim([0, 400])
+
 
 plt.show()
 
@@ -181,6 +197,14 @@ ax6.plot(SE4.iloc[:,2], marker = 'x',color='peru', linestyle = '--')
 ax6.set_ylabel('SE4')
 ax6.set_xlabel('time (H)')
 
+
+ax1.set_ylim([0, 400])
+ax2.set_ylim([0, 400])
+ax3.set_ylim([0, 400])
+ax4.set_ylim([0, 400])
+ax5.set_ylim([0, 400])
+ax6.set_ylim([0, 400])
+
 plt.show()
 
 
@@ -206,26 +230,29 @@ ax1.plot(DE.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
 ax1.set_ylabel('DE')
 ax1.legend(DE, loc='upper center', bbox_to_anchor=(0.5, 1.45),
           ncol=4, fancybox=True)
+ax1.set_ylim([0, 400])
 
 ax2.plot(DK1.iloc[:,0], marker = 'x', color='b')
 ax2.plot(DK1.iloc[:,1], marker = 'x',color='m', linestyle = '--')
 ax2.plot(DK1.iloc[:,2], marker = 'x',color='g', linestyle = '--')
 ax2.plot(DK1.iloc[:,3], marker = 'x',color='y', linestyle = '--')
-ax1.plot(DK1.iloc[:,4], marker = 'x',color='c', linestyle = '--')
-ax1.plot(DK1.iloc[:,5], marker = 'x',color='r', linestyle = '--')
+ax2.plot(DK1.iloc[:,4], marker = 'x',color='c', linestyle = '--')
+ax2.plot(DK1.iloc[:,5], marker = 'x',color='r', linestyle = '--')
 ax2.plot(DK1.iloc[:,6], marker = 'x',color='k', linestyle = '--')
 ax2.plot(DK1.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
 ax2.set_ylabel('DK1')
+ax2.set_ylim([0, 400])
 
 ax3.plot(DK2.iloc[:,0], marker = 'x', color='b')
 ax3.plot(DK2.iloc[:,1], marker = 'x',color='m', linestyle = '--')
 ax3.plot(DK2.iloc[:,2], marker = 'x',color='g', linestyle = '--')
 ax3.plot(DK2.iloc[:,3], marker = 'x',color='y', linestyle = '--')
-ax2.plot(DK2.iloc[:,4], marker = 'x',color='c', linestyle = '--')
-ax2.plot(DK2.iloc[:,5], marker = 'x',color='r', linestyle = '--')
+ax3.plot(DK2.iloc[:,4], marker = 'x',color='c', linestyle = '--')
+ax3.plot(DK2.iloc[:,5], marker = 'x',color='r', linestyle = '--')
 ax3.plot(DK2.iloc[:,6], marker = 'x',color='k', linestyle = '--')
 ax3.plot(DK2.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
 ax3.set_ylabel('DK2')
+ax3.set_ylim([0, 400])
 
 ax4.plot(NO2.iloc[:,0], marker = 'x', color='b')
 ax4.plot(NO2.iloc[:,1], marker = 'x',color='m', linestyle = '--')
@@ -235,7 +262,7 @@ ax4.plot(NO2.iloc[:,4], marker = 'x',color='c', linestyle = '--')
 ax4.plot(NO2.iloc[:,5], marker = 'x',color='r', linestyle = '--')
 ax4.plot(NO2.iloc[:,6], marker = 'x',color='k', linestyle = '--')
 ax4.plot(NO2.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
-ax4.set_ylabel('NO2')
+ax4.set_ylim([0, 400])
 
 ax5.plot(SE3.iloc[:,0], marker = 'x', color='b')
 ax5.plot(SE3.iloc[:,1], marker = 'x',color='m', linestyle = '--')
@@ -246,6 +273,7 @@ ax5.plot(SE3.iloc[:,5], marker = 'x',color='r', linestyle = '--')
 ax5.plot(SE3.iloc[:,6], marker = 'x',color='k', linestyle = '--')
 ax5.plot(SE3.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
 ax5.set_ylabel('SE3')
+ax5.set_ylim([0, 400])
 
 ax6.plot(SE4.iloc[:,0], marker = 'x', color='b')
 ax6.plot(SE4.iloc[:,1], marker = 'x',color='m', linestyle = '--')
@@ -257,5 +285,6 @@ ax6.plot(SE4.iloc[:,6], marker = 'x',color='k', linestyle = '--')
 ax6.plot(SE4.iloc[:,7], marker = 'x',color='peru', linestyle = '--')
 ax6.set_ylabel('SE4')
 ax6.set_xlabel('time (H)')
+ax6.set_ylim([0, 400])
 
 plt.show()
