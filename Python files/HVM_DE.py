@@ -341,7 +341,7 @@ HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True)
 DE = HMV[['DE']]
 
 #%% define forecasting horizon
-horizon = 28
+horizon = 24
 
 #%% train test split
 # we will go with a train-test split such that our test set represents 168 Hours worth of data
@@ -371,7 +371,7 @@ train_data = train.values
 test_data = test.values
 
 # determine number of timesteps. If 5 then inputs will be 4 and output will be the 5th timestep
-timesteps=5
+timesteps=24
 
 # Converting training data to 2D tensor using nested list comprehension:
 train_data_timesteps=np.array([[j for j in train_data[i:i+timesteps]] for i in range(0,len(train_data)-timesteps+1)])[:,:,0]
@@ -537,9 +537,9 @@ from tensorflow.keras.callbacks import EarlyStopping
 #%% BUILD LSTM
 model_LSTM = Sequential()
 model_LSTM.add(InputLayer((X_train.shape[1], X_train.shape[2])))
-model_LSTM.add(LSTM(64))
+model_LSTM.add(LSTM(128))
 model_LSTM.add(Dropout(0.2))
-model_LSTM.add(Dense(8, activation='relu'))
+model_LSTM.add(Dense(64, activation='relu'))
 model_LSTM.add(Dense(1, activation='linear'))
 
 model_LSTM.summary()
@@ -559,8 +559,7 @@ start_time = time.time()
 
 history = model_LSTM.fit(X_train, y_train,
                      validation_data=(X_val, y_val),
-                     epochs=30,
-                     callbacks=[cp])
+                     epochs=30,)
 
 time_DE_LSTM = (time.time() - start_time)
 
