@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 from pandas.plotting import register_matplotlib_converters
 
-mpl.rcParams['figure.figsize'] = (8, 6)
+mpl.rcParams['figure.figsize'] = (20, 10)
 mpl.rcParams['axes.grid'] = False
 mpl.rcParams['figure.dpi'] = 300
 # set styles
@@ -18,10 +18,10 @@ mpl.rcParams['figure.dpi'] = 300
 register_matplotlib_converters()
 
 # set seaborn style
-sns.set(style='whitegrid', palette='deep', font_scale=1.8)
+sns.set(style='whitegrid', palette='deep', font_scale=2)
 
 # set plotting parameters
-rcParams['figure.figsize'] = 20, 12  
+rcParams['figure.figsize'] = 15, 20 
 rcParams['font.family'] = "sans-serif"
 # rcParams['text.usetex'] = True
 
@@ -29,10 +29,10 @@ rcParams['font.family'] = "sans-serif"
 df = pd.read_csv('Elprices.csv', index_col='HourDK', parse_dates=True) 
 
 #%% plot only few series 
-df[['DK1', 'NO2', 'SE3']].plot(linewidth = 1, 
-                               xlabel = 'Year', 
-                               title="European bidding areas", 
-                               subplots=True, color = 'tab:blue')
+df['DK1'].plot(linewidth = 1, 
+                legend = True,     
+                xlabel = 'Year', 
+                subplots=True, color = 'tab:blue')
 
 # resample by Month
 # df['DK1'].resample('D').sum().plot(linewidth = 0.5, xlabel = 'Year')

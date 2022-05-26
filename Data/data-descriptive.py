@@ -31,32 +31,30 @@ HMV = pd.read_csv('NP-HMV.csv', index_col='HourDK', parse_dates=True)
 
 #%% print distribution plots HMV
 # fig, axes = plt.subplots(2)
-fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-
-fig.suptitle('NP-HMV Series distribution')
+fig, axes = plt.subplots(2, 3, figsize=(20,12))
 
 
-sns.distplot(HMV['DE'], hist = False, kde = True,
+sns.distplot(HMV['DE'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[0,0]
                  )
-sns.distplot(HMV['DK1'], hist = False, kde = True,
+sns.distplot(HMV['DK1'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[0,1]
                  )
-sns.distplot(HMV['DK2'], hist = False, kde = True,
+sns.distplot(HMV['DK2'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[0,2]
                  )
-sns.distplot(HMV['SE3'], hist = False, kde = True,
+sns.distplot(HMV['SE3'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[1,0]
                  )
-sns.distplot(HMV['SE4'], hist = False, kde = True,
+sns.distplot(HMV['SE4'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[1,1]
                  )
-sns.distplot(HMV['NO2'], hist = False, kde = True,
+sns.distplot(HMV['NO2'], hist = True, kde = True,
                  kde_kws = {'shade': True, 'linewidth': 3}, 
                  ax = axes[1,2]
                  )
@@ -99,6 +97,9 @@ sns.distplot(LMV['NO2'], hist = False, kde = True,
 print("LMV descriptive statistics")
 pd.options.display.max_columns = LMV.shape[1]
 print(round(LMV.describe(include='all'),2))
+
+#%% reduce NP_HMV series
+HMV = HMV['2021-03-01':'2022-03-01']
 
 #%% get descriptive statistics for NP_HMV
 print("HMV descriptive statistics")
