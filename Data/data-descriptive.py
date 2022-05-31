@@ -145,7 +145,9 @@ def adf_test(series,title=''):
         print("Fail to reject the null hypothesis")
         print(bcolors.WARNING + series.name + " Series Data has a unit root and is non-stationary " + bcolors.ENDC)
 
-#%% run ADF test on all HMV series     
+#%% run ADF test on all HMV series    
+import sys
+sys.stdout = open('C:/Users/timon/Desktop/file.txt',"w")
 print(bcolors.BOLD + bcolors.UNDERLINE + "RUN ADF TESTS ON HMV SERIES:" + bcolors.ENDC)  
 for column in HMV.columns[0:]:
     print(bcolors.UNDERLINE + "ADF Testing for " + column + " Series of Type HMV:" + bcolors.ENDC)

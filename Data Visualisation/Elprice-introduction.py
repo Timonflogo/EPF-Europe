@@ -40,13 +40,12 @@ df['DK1'].plot(linewidth = 1,
 #%% plot all series 
 fig, axes= plt.subplots(6,1)
 
-
-df[['DK1']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[0],sharex = True)
-df[['DK2']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[1],sharex = True)
-df[['SE3']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[2])
-df[['SE4']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[3])
-df[['NO2']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[4])
-df[['DE']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[5])
+df[['DE']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[0],sharex=True)
+df[['DK1']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[1],sharex = True)
+df[['DK2']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[2],sharex = True)
+df[['NO2']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[3])
+df[['SE3']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[4])
+df[['SE4']].plot(linewidth = 1, xlabel = 'Year', color = 'tab:blue',ax=axes[5])
 for i in range(len(axes)):
     axes[i].axvline(pd.Timestamp("2017-03-01"), color='red')
 plt.show()
